@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccXtract", "AccXtract\AccXtract.csproj", "{26AEAFC7-8424-43EC-A20C-757B49924179}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Grabber", "..\Grabber\Grabber.csproj", "{463007ED-18C1-484E-BFEF-CAE86D233FFC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{26AEAFC7-8424-43EC-A20C-757B49924179}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26AEAFC7-8424-43EC-A20C-757B49924179}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26AEAFC7-8424-43EC-A20C-757B49924179}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26AEAFC7-8424-43EC-A20C-757B49924179}.Release|Any CPU.Build.0 = Release|Any CPU
+		{463007ED-18C1-484E-BFEF-CAE86D233FFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{463007ED-18C1-484E-BFEF-CAE86D233FFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{463007ED-18C1-484E-BFEF-CAE86D233FFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{463007ED-18C1-484E-BFEF-CAE86D233FFC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

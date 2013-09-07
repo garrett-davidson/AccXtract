@@ -1,7 +1,27 @@
-﻿using System;
+﻿//Copyright 2013 Garrett Davidson
+//
+//This file is part of AccXtract
+//
+//    AccXtract is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    AccXtract is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with AccXtract.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -89,52 +109,61 @@ namespace AccXtract
 
         private void addChromeProfile(object sender, EventArgs e)
         {
-            Button button = (Button)sender;
-            string profileName = button.Text;
-
-
-            string localStatePath = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + @"\AppData\Local\Google\Chrome\User Data\";
-            StreamReader localState = new StreamReader(localStatePath + "\\Local State");
-            StreamWriter output = new StreamWriter(localStatePath + "\\Local State.out");
-
-            string line = "";
-            bool foundProfiles = false;
-
-            while (!foundProfiles && line != null)
+            Process[] chrome = Process.GetProcessesByName("chrome");
+            if (chrome.Length == 0)
             {
-                line = localState.ReadLine();
-                output.WriteLine(line);
-                if (line.Contains(@"""profile"": {"))
-                {
-                    foundProfiles = true;
-                }
-            }
+                Console.WriteLine("Chrome not running");
 
-            bool wroteNewProfile = false;
-            int highestProfileNumber = 0;
-            
-            while (!wroteNewProfile && line != null)
-            {
-                line = localState.ReadLine();
 
-                if (line.Contains(@"""Profile "))
-                {
-                    string number = line[line.IndexOf('e') + 2].ToString();
-                    highestProfileNumber = Convert.ToInt32(number);
-                }
 
-                if (line.Contains(@"}"))
+
+
+                Button button = (Button)sender;
+                string profileName = button.Text;
+
+
+                string localStatePath = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + @"\AppData\Local\Google\Chrome\User Data\";
+                StreamReader localState = new StreamReader(localStatePath + "\\Local State");
+                StreamWriter output = new StreamWriter(localStatePath + "\\Local State.out");
+
+                string line = "";
+                bool foundProfiles = false;
+
+                while (!foundProfiles && line != null)
                 {
-                    if (!line.Contains(@","))
+                    line = localState.ReadLine();
+                    output.WriteLine(line);
+                    if (line.Contains(@"""profile"": {"))
                     {
-                        line += ",";
-                        output.WriteLine(line);
-                        highestProfileNumber++;
-                        
-                        //WARNING
-                        //do ***NOT*** modify spacing of the quoted parted in ANY WAY if you want it to keep working
-                        //Chrome is very picky with this thing
-                        output.Write(@"         ""Profile " + highestProfileNumber + @""": {
+                        foundProfiles = true;
+                    }
+                }
+
+                bool wroteNewProfile = false;
+                int highestProfileNumber = 0;
+
+                while (!wroteNewProfile && line != null)
+                {
+                    line = localState.ReadLine();
+
+                    if (line.Contains(@"""Profile "))
+                    {
+                        string number = line[line.IndexOf('e') + 2].ToString();
+                        highestProfileNumber = Convert.ToInt32(number);
+                    }
+
+                    if (line.Contains(@"}"))
+                    {
+                        if (!line.Contains(@","))
+                        {
+                            line += ",";
+                            output.WriteLine(line);
+                            highestProfileNumber++;
+
+                            //WARNING
+                            //do ***NOT*** modify spacing of the quoted parted in ANY WAY if you want it to keep working
+                            //Chrome is very picky with this thing
+                            output.Write(@"         ""Profile " + highestProfileNumber + @""": {
             ""avatar_icon"": ""chrome://theme/IDR_PROFILE_AVATAR_12"",
             ""background_apps"": false,
             ""managed_user_id"": """",
@@ -143,34 +172,42 @@ namespace AccXtract
             ""user_name"": """"
          }
 ");
-                        wroteNewProfile = true;
+                            wroteNewProfile = true;
+                        }
+
+                        else output.WriteLine(line);
                     }
 
                     else output.WriteLine(line);
                 }
 
-                else output.WriteLine(line);
+                while (line != null)
+                {
+                    line = localState.ReadLine();
+                    output.WriteLine(line);
+                }
+
+                localState.Close();
+                output.Close();
+
+                GroupBox group = (GroupBox)button.Parent.Parent;
+                string computerName = group.Text;
+
+                string newUserProfile = localStatePath + "Profile " + highestProfileNumber.ToString();
+                Directory.CreateDirectory(newUserProfile);
+                File.Copy(AccXtractFolder + "\\" + computerName + "\\Chrome\\" + button.Text + "\\cookies", newUserProfile + "\\cookies");
+                File.Copy(localStatePath + "\\Local State.out", localStatePath + "\\Local State", true);
+                File.Delete(localStatePath + "Local State.out");
+
+                button.Enabled = false;
             }
 
-            while (line != null)
+            else
             {
-                line = localState.ReadLine();
-                output.WriteLine(line);
+                Console.WriteLine("Chrome running");
+
+                MessageBox.Show("Please close Chrome and try again");
             }
-
-            localState.Close();
-            output.Close();
-
-            GroupBox group = (GroupBox)button.Parent.Parent;
-            string computerName = group.Text;
-
-            string newUserProfile = localStatePath + "Profile " + highestProfileNumber.ToString();
-            Directory.CreateDirectory(newUserProfile);
-            File.Copy(AccXtractFolder + "\\" + computerName + "\\Chrome\\" + button.Text + "\\cookies", newUserProfile + "\\cookies");
-            File.Copy(localStatePath + "\\Local State.out", localStatePath + "\\Local State", true);
-            File.Delete(localStatePath + "Local State.out");
-
-            button.Enabled = false;
         }
 
         #region New Creation Functions

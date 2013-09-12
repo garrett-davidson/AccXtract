@@ -137,7 +137,6 @@
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "AccXtract";
-            this.Load += new System.EventHandler(this.Form1_Load);
             this.localGroup.ResumeLayout(false);
             this.localGroup.PerformLayout();
             this.chromeLocalPanel.ResumeLayout(false);

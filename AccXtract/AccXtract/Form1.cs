@@ -252,6 +252,76 @@ namespace AccXtract
             else MessageBox.Show("Please close Chrome and try again");
         }
 
+        private void addFirefoxProfile(object sender, EventArgs e)
+        {
+            Button button = (Button)sender;
+            string profileName = button.Text;
+            GroupBox group = (GroupBox)button.Parent.Parent;
+            string computerName = group.Text;
+
+            Process[] firefox = Process.GetProcessesByName("firefox");
+            if (firefox.Length == 0){
+                string firefoxPath = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%") + "\\AppData\\Roaming\\Mozilla\\Firefox\\";
+                if (Directory.Exists(firefoxPath))
+                {
+                    StreamReader ProfilesINI = new StreamReader(firefoxPath + "\\profiles.ini");
+                    StreamWriter outProfilesINI = new StreamWriter(firefoxPath + "\\profiles.ini.out");
+
+                    string line = ProfilesINI.ReadLine();
+                    int profileNumber = 0;
+                    while (line != null)
+                    {
+                        
+                        if (line.Contains("StartWithLastProfile="))
+                        {
+                            line = line.Replace("1", "0");
+                        }
+
+                        else if (line.Contains("[Profile"))
+                        {
+                            //done in case of more than 9 profiles
+                            string numberString = line.Substring(line.IndexOf('e') + 1, line.Length - line.IndexOf('e') - 2);
+
+                            profileNumber = Convert.ToInt32(numberString);
+                        }
+                        outProfilesINI.WriteLine(line);
+                        line = ProfilesINI.ReadLine();
+                    }
+
+                    if (Directory.Exists(firefoxPath + "\\Profiles\\AccXtract." + profileName)) profileName += profileNumber.ToString();
+                    outProfilesINI.Write(@"
+[Profile" + (profileNumber + 1) + @"]
+Name=" + profileName + @"
+IsRelative=1
+Path=Profiles/AccXtract." + profileName);
+
+
+                    ProfilesINI.Close();
+                    outProfilesINI.Close();
+                    File.Delete(firefoxPath + "\\profiles.ini");
+                    File.Move(firefoxPath + "\\profiles.ini.out", firefoxPath + "\\profiles.ini");
+
+                    string newProfile = firefoxPath + "\\Profiles\\AccXtract." + profileName;
+                    Directory.CreateDirectory(newProfile);
+
+                    string[] files = Directory.GetFiles(AccXtractFolder + "\\" + computerName + "\\Firefox\\" + button.Text);
+                    string[] name = new string[0];
+                    foreach (string file in files)
+                    {
+                        name = file.Split('\\');
+                        File.Copy(file, newProfile + "\\" + name[name.Length - 1]);
+                    }
+                }
+
+                else MessageBox.Show("Please install Firefox");
+
+
+                button.Enabled = false;
+            }
+
+            else MessageBox.Show("Please close Firefox and try again");
+        }
+
         #region UI Functions
         private GroupBox addNewComputer(string path)
         {
@@ -272,6 +342,7 @@ namespace AccXtract
 
             Panel lastPanel = null;
 
+            #region Chrome
             if (Directory.Exists(path + "\\Chrome"))
             {
                 lastPanel = addPanel(@"Google Chrome (Click to add to Chrome)", lastPanel, newGroup);
@@ -285,6 +356,23 @@ namespace AccXtract
                     newButton.Click += addChromeProfile;
                 }
             }
+            #endregion
+
+            #region Firefox
+            if (Directory.Exists(path + "\\Firefox"))
+            {
+                lastPanel = addPanel(@"Firefox (Click to add to FF)", lastPanel, newGroup);
+                string[] profiles = Directory.GetDirectories(path + "\\Firefox");
+
+                foreach (string profile in profiles)
+                {
+                    string[] components2 = profile.Split('\\');
+                    string profileName = components2[components2.Length - 1];
+                    Button newButton = addButtonToPanel(profileName, lastPanel);
+                    newButton.Click += addFirefoxProfile;
+                }
+            }
+            #endregion
 
             return newGroup;
         }
@@ -340,35 +428,11 @@ namespace AccXtract
 
             panel.Controls.Add(newButton);
 
+            if (panel.HorizontalScroll.Visible) panel.Size = new Size(panel.Size.Width, panel.Size.Height + 7);
+
             return newButton;
         }
 
         #endregion
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private static void InitBLOB(byte[] data, ref DPAPI.DATA_BLOB blob)
-        {
-            // Use empty array for null parameter.
-            if (data == null)
-                data = new byte[0];
-
-            // Allocate memory for the BLOB data.
-            blob.pbData = Marshal.AllocHGlobal(data.Length);
-
-            // Make sure that memory allocation was successful.
-            if (blob.pbData == IntPtr.Zero)
-                throw new Exception(
-                    "Unable to allocate data buffer for BLOB structure.");
-
-            // Specify number of bytes in the BLOB.
-            blob.cbData = data.Length;
-
-            // Copy data from original source to the BLOB structure.
-            Marshal.Copy(data, 0, blob.pbData, data.Length);
-        }
     }
 }

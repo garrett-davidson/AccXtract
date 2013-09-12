@@ -81,8 +81,7 @@ public class DPAPI
     /// </param>
     private static void InitPrompt(ref CRYPTPROTECT_PROMPTSTRUCT ps)
     {
-        ps.cbSize = Marshal.SizeOf(
-                                  typeof(CRYPTPROTECT_PROMPTSTRUCT));
+        ps.cbSize = 0;
         ps.dwPromptFlags = 0;
         ps.hwndApp = NullPtr;
         ps.szPrompt = null;
@@ -291,7 +290,6 @@ public class DPAPI
         // parameter.
         CRYPTPROTECT_PROMPTSTRUCT prompt =
                                   new CRYPTPROTECT_PROMPTSTRUCT();
-        InitPrompt(ref prompt);
 
         try
         {
@@ -307,15 +305,6 @@ public class DPAPI
             }
 
             // Convert entropy bytes into a BLOB structure.
-            try
-            {
-                InitBLOB(entropyBytes, ref entropyBlob);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(
-                    "Cannot initialize entropy BLOB.", ex);
-            }
 
             // Disable any types of UI.
             int flags = CRYPTPROTECT_UI_FORBIDDEN;
@@ -326,11 +315,11 @@ public class DPAPI
 
             // Call DPAPI to encrypt data.
             bool success = CryptProtectData(ref plainTextBlob,
-                                                description,
+                                                @"",
                                             ref entropyBlob,
                                                 IntPtr.Zero,
                                             ref prompt,
-                                                flags,
+                                                0,
                                             ref cipherTextBlob);
             // Check the result.
             if (!success)
@@ -493,7 +482,6 @@ public class DPAPI
         // parameter.
         CRYPTPROTECT_PROMPTSTRUCT prompt =
                                   new CRYPTPROTECT_PROMPTSTRUCT();
-        InitPrompt(ref prompt);
 
         // Initialize description string.
         description = String.Empty;
@@ -512,15 +500,6 @@ public class DPAPI
             }
 
             // Convert entropy bytes into a BLOB structure.
-            try
-            {
-                InitBLOB(entropyBytes, ref entropyBlob);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(
-                    "Cannot initialize entropy BLOB.", ex);
-            }
 
             // Disable any types of UI. CryptUnprotectData does not
             // mention CRYPTPROTECT_LOCAL_MACHINE flag in the list of
@@ -576,5 +555,30 @@ public class DPAPI
             if (entropyBlob.pbData != IntPtr.Zero)
                 Marshal.FreeHGlobal(entropyBlob.pbData);
         }
+    }
+
+    public static byte[] encryptBytes(byte[] input)
+    {
+
+        DATA_BLOB encryptedBlob = new DATA_BLOB();
+        DATA_BLOB decryptedBlob = new DATA_BLOB();
+
+        decryptedBlob.pbData = Marshal.AllocHGlobal(input.Length);
+        decryptedBlob.cbData = input.Length;
+        Marshal.Copy(input, 0, decryptedBlob.pbData, input.Length);
+
+        string a = "";
+        DATA_BLOB b = new DATA_BLOB();
+        CRYPTPROTECT_PROMPTSTRUCT d = new CRYPTPROTECT_PROMPTSTRUCT();
+        CryptProtectData(ref decryptedBlob, @"", ref b, IntPtr.Zero, ref d, 0, ref encryptedBlob);
+
+        byte[] encryptedBytes = new byte[encryptedBlob.cbData];
+
+        Marshal.Copy(encryptedBlob.pbData,
+                         encryptedBytes,
+                         0,
+                         encryptedBlob.cbData);
+
+        return encryptedBytes;
     }
 }

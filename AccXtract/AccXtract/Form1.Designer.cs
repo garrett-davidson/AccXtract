@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.localGroup = new System.Windows.Forms.GroupBox();
             this.chromeLocalPanel = new System.Windows.Forms.Panel();
             this.chromDefaultButton = new System.Windows.Forms.Button();
@@ -45,6 +46,7 @@
             // 
             this.localGroup.AutoSize = true;
             this.localGroup.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.localGroup.BackColor = System.Drawing.SystemColors.Control;
             this.localGroup.Controls.Add(this.chromeLocalPanel);
             this.localGroup.Controls.Add(this.label1);
             this.localGroup.Location = new System.Drawing.Point(12, 53);
@@ -130,10 +132,12 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.AutoScroll = true;
+            this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(305, 262);
             this.Controls.Add(this.loadFolderButton);
             this.Controls.Add(this.localGroup);
             this.Controls.Add(this.menuStrip1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "AccXtract";

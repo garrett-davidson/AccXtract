@@ -382,10 +382,12 @@ Path=Profiles/AccXtract." + profileName);
             Panel newPanel = new Panel();
             Label newLabel = new Label();
 
+            newPanel.Padding = Padding.Empty;
+
             if (lastPanel != null)
             {
-                newLabel.Location = new Point(7, lastPanel.Location.Y + lastPanel.Height + 12);
-                newPanel.Location = new Point(10, newLabel.Location.Y + newLabel.Height + 3);
+                newLabel.Location = new Point(7, lastPanel.Location.Y + lastPanel.Height + 3);
+                newPanel.Location = new Point(10, newLabel.Location.Y + 17);
             }
 
             else
@@ -428,7 +430,7 @@ Path=Profiles/AccXtract." + profileName);
 
             panel.Controls.Add(newButton);
 
-            if (panel.HorizontalScroll.Visible) panel.Size = new Size(panel.Size.Width, panel.Size.Height + 7);
+            if (panel.HorizontalScroll.Visible) panel.Size = new Size(panel.Size.Width, panel.Size.Height + 16);
 
             return newButton;
         }

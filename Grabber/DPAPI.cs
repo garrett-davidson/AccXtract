@@ -6,32 +6,32 @@ using System.ComponentModel;
 public class DPAPI
 {
 
-    [DllImport( "crypt32.dll",
-                SetLastError=true,
-                CharSet=System.Runtime.InteropServices.CharSet.Auto)]
+    [DllImport("crypt32.dll",
+                SetLastError = true,
+                CharSet = System.Runtime.InteropServices.CharSet.Auto)]
     private static extern
-        bool CryptUnprotectData(ref DATA_BLOB       pCipherText,
-                                ref string          pszDescription,
-                                ref DATA_BLOB       pEntropy,
-                                    IntPtr          pReserved,
+        bool CryptUnprotectData(ref DATA_BLOB pCipherText,
+                                ref string pszDescription,
+                                ref DATA_BLOB pEntropy,
+                                    IntPtr pReserved,
                                 ref CRYPTPROTECT_PROMPTSTRUCT pPrompt,
-                                    int             dwFlags,
-                                ref DATA_BLOB       pPlainText);
+                                    int dwFlags,
+                                ref DATA_BLOB pPlainText);
 
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct DATA_BLOB
     {
-        public int     cbData;
-        public IntPtr  pbData;
+        public int cbData;
+        public IntPtr pbData;
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct CRYPTPROTECT_PROMPTSTRUCT
     {
-        public int      cbSize;
-        public int      dwPromptFlags;
-        public IntPtr   hwndApp;
-        public string   szPrompt;
+        public int cbSize;
+        public int dwPromptFlags;
+        public IntPtr hwndApp;
+        public string szPrompt;
     }
 
     public static byte[] decryptBytes(byte[] input)
@@ -58,4 +58,5 @@ public class DPAPI
 
         return plainTextBytes;
     }
+
 }

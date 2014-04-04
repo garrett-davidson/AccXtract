@@ -27,3 +27,6 @@ Double click and that's it!
 Once you have the data, AccXtract.exe decrypts and encrypts the data as needed and puts it all in place to be immediately useful.
 
 - Simply run AccXtract.exe, load the AccXtract folder created on the USB, and select which data you want to view/use.
+
+
+*Usage can be found [here](https://github.com/garrett-davidson/AccXtract/wiki/AccXtract-Usage).*
